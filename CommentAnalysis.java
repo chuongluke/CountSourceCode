@@ -1,0 +1,127 @@
+package lession1;
+
+import java.io.*;
+
+public class CommentAnalysis {
+
+    int codeLines = 0, commentLines = 0, totalLines = 0, blankLines = 0;
+    boolean commentStarted = false;
+    public static File fileName = null;
+
+    public static void main(String[] args) {
+        if (0 < args.length) {
+            // text file will be passed during run time
+            fileName = new File(args[0]);
+        } else {
+            System.out.println("Cant Find The File Specified : " + fileName);
+        }
+        CommentAnalysis obj = new CommentAnalysis();
+        obj.analyzeFile();
+    }
+
+    public void analyzeFile() {
+        BufferedReader br = null;
+        String sCurrentLine = null;
+        boolean sameLine = false;
+
+        try {
+            br = new BufferedReader(new FileReader(fileName));
+
+            while ((sCurrentLine = br.readLine()) != null) {
+                sCurrentLine = sCurrentLine.trim();
+                if (sCurrentLine.equals("")) {
+                	blankLines++;
+                }
+                sameLine = false;
+                //System.out.println(sCurrentLine);
+                while(sCurrentLine != null && sCurrentLine.length() > 0) {
+                    //System.out.println("for line: " + sCurrentLine + " and sameLine:" + sameLine);
+                    sCurrentLine = analyzeLine(sCurrentLine, sameLine);
+                    sameLine = true;
+                }
+            }
+
+            totalLines = codeLines + commentLines;
+            System.out.println("Total number of Lines are : " + totalLines);
+            System.out.println("Number of comments: " + commentLines);
+            System.out.println("Number of code lines: " + codeLines);
+            System.out.println("Number of blank lines: " + blankLines);
+            double cPercent = (double)commentLines/totalLines;
+            cPercent = cPercent * 100;
+            System.out.println("Ratio is: " + cPercent);
+        }
+        catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        finally {
+            try {
+                // close bufferReader
+                if (br != null) {
+                    br.close();
+                }
+            } catch (IOException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    public String analyzeLine(String sCurrentLine, boolean sameLine) {        
+        
+        if(commentStarted && sCurrentLine.contains("*/")) {
+            if (!sameLine)
+                commentLines++;
+            commentStarted = false;
+            if (!sCurrentLine.endsWith("*/"))
+                sCurrentLine = sCurrentLine.substring(sCurrentLine.indexOf("*/")+2).trim();
+            else
+                sCurrentLine = null;
+        }
+        else if(sCurrentLine.startsWith("//")) {
+            if (!sameLine)
+                commentLines++;
+            sCurrentLine = null;
+        }
+        else if(sCurrentLine.contains("/*")) {            
+            commentStarted = true;
+            if (!sCurrentLine.startsWith("/*")){
+                if (!sameLine)
+                    codeLines++;
+                sCurrentLine = sCurrentLine.substring(sCurrentLine.indexOf("/*")).trim();                
+            }
+            else {
+                if (!sameLine)
+                    commentLines++;
+                if (sCurrentLine.contains("*/")) {
+                    commentStarted = false;
+                    if (!sCurrentLine.endsWith("*/"))
+                        sCurrentLine = sCurrentLine.substring(sCurrentLine.indexOf("*/")+2).trim();
+                    else
+                        sCurrentLine = null;
+                }
+                else
+                    sCurrentLine = null;
+            }
+        }        
+        else if(commentStarted) {
+            if (!sameLine)
+                commentLines++;
+            sCurrentLine = null;
+        }
+        else {
+            commentStarted = false;
+            if (!sameLine)
+                codeLines++;
+            if (sCurrentLine.contains(";")) {
+                if (!sCurrentLine.endsWith(";")) {
+                    sCurrentLine = sCurrentLine.substring(sCurrentLine.indexOf(";")+1).trim();
+                }
+                else
+                    sCurrentLine = null;
+            }
+            else
+                sCurrentLine = null;
+        }
+
+        return sCurrentLine;
+    }
+}
